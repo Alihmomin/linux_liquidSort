@@ -5,31 +5,7 @@
 
 #define VIAL_SIZE 4
 
-struct vial_struct
-{
-	int content[VIAL_SIZE];
-	bool done;
-	int top;
-};
-
-typedef struct vial_struct vial_t;
-
-enum color getTopColor(vial_t* v)
-{
-
-}
-
-
-
-typedef struct
-{
-	vial_t* state;
-	int num_vials;
-} gameState_t;
-
-
-
- enum color
+enum color
  {
  	empty = (int)' ',
  	red = (int)'r',
@@ -43,6 +19,106 @@ typedef struct
  	green = (int)'e',
  	purple = (int)'p'
  };
+
+
+struct vial_struct
+{
+	int content[VIAL_SIZE];
+	bool done;
+	int top;
+};
+
+typedef struct vial_struct vial_t;
+
+int getTopColorIndex(vial_t* v)
+{
+
+	return (v->top+1 >= 4) ? 3 : (v->top+1);
+}
+
+void incrementTop(vial_t* v)
+{
+	v->top = (v->top+1 >= 4) ? 3 : (v->top+1);
+}
+
+void decrementTop(vial_t* v)
+{
+	v->top = ((v->top-1) < -1) ? -1 : (v->top-1);
+}
+
+int getVialEmptyLen(vial_t* v)
+{
+	int emptySpace = 0;
+	for(int i = 0; i < VIAL_SIZE; i++)
+	{
+		if((v->content[i]) == empty)
+		{
+			emptySpace++;
+		}
+	}
+
+	return emptySpace;
+}
+
+enum color getTopColor(vial_t* v)
+{  
+	int index = getTopColorIndex(v);
+	return v->content[index];
+}
+
+int removeTopColor(vial_t* v)
+{
+	if(getTopColor(v) == empty)
+	{
+		return -1;
+	}
+
+	v->content[getTopColorIndex(v)] = empty;
+	incrementTop(v);
+
+	return 0;
+}
+
+int addTopColor(vial_t* v, enum color c)
+{
+	if(getVialEmptyLen(v) <= 0)
+	{
+		return -1;
+	}
+
+	v->content[v->top] = c;
+	decrementTop(v);
+
+	return 0;
+}
+
+bool checkAndSetDone(vial_t* v)
+{
+	bool done = true;
+	enum color toTopColor = getTopColor(v);
+	for(int i = 0; i < VIAL_SIZE; i++)
+	{
+		done = done && (toTopColor == v->content[i]);
+		if(!done)
+		{
+			break;
+		}
+	}
+
+	v->done = done;
+
+	return done;
+}
+
+typedef struct
+{
+	vial_t* state;
+	int num_vials;
+} gameState_t;
+
+
+
+ 
 
  //int level[] = {4, yellow,yellow,red,red, yellow,yellow,red,red, empty,empty,empty,empty, empty,empty,empty,empty};
  int level[] = {4, empty,empty,red,red, yellow,yellow,red,red, empty,empty,yellow,yellow, empty,empty,empty,empty};
@@ -164,23 +240,6 @@ void print_game_state_metadata(gameState_t* gs)
 
 }
 
-int vailOpenSpaces(int vial, gameState_t* gs)
-{
-	int openSpaces = 0;
-	int i = 0;
-	while((i < VIAL_SIZE))
-	{
-		if(gs->state[vial].content[i] != empty)
-		{
-			break;
-		}
-		i++;
-		openSpaces++;	
-	}
-	
-
-	return openSpaces;
-}
 
 int pour(int from, int to, gameState_t* gs)
 {
@@ -191,48 +250,46 @@ int pour(int from, int to, gameState_t* gs)
 	vial_t* to_v = &gs->state[to];
 
 	//Check to see if to vial is full
-	if(to_v->top == -1)
+	if(getVialEmptyLen(to_v) == 0)
 	{
 		return -1;
 	}
 
 
-	enum color toTopColor = to_v->content[to_v->top+1];
-	enum color fromTopColor = from_v->content[from_v->top+1];
+	enum color toTopColor = getTopColor(to_v); //to_v->content[to_v->top+1];
+	enum color fromTopColor = getTopColor(from_v); //from_v->content[from_v->top+1];
 
-	if((toTopColor != fromTopColor) && (to_v->top != 3))
+	if((toTopColor != fromTopColor) && (getVialEmptyLen(to_v) != 0))
 	{
 		return -2;
 	}
 
 	
-
 	while(to_v->top != -1)
 	{
-		to_v->content[to_v->top] = from_v->content[from_v->top+1];
-		from_v->content[from_v->top+1] = empty;
-		from_v->top++;
-		to_v->top--;
-		if(from_v->content[from_v->top+1] != fromTopColor)
+		addTopColor(to_v, getTopColor(from_v));
+		removeTopColor(from_v);
+		if(getTopColor(from_v) != fromTopColor)
 		{
 			break;
 		}
 	}
 
+	// while(to_v->top != -1)
+	// {
+	// 	to_v->content[to_v->top] = from_v->content[from_v->top+1];
+	// 	from_v->content[from_v->top+1] = empty;
+	// 	from_v->top++;
+	// 	to_v->top--;
+	// 	if(from_v->content[from_v->top+1] != fromTopColor)
+	// 	{
+	// 		break;
+	// 	}
+	// }
+
 	//update done status
-	toTopColor = to_v->content[to_v->top+1];
-	fromTopColor = from_v->content[from_v->top+1];
-
-	bool to_done = true;
-	bool from_done = true;
-	for(int i = 0; i < VIAL_SIZE; i++)
-	{
-		to_done = to_done && (toTopColor == to_v->content[i]);
-		from_done = from_done && (fromTopColor == from_v->content[i]);
-
-	}
-	to_v->done = to_done;
-	from_v->done = from_done;
+	checkAndSetDone(from_v);
+	checkAndSetDone(to_v);
 
 	return 0;
 
