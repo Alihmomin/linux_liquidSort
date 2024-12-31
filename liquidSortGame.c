@@ -14,6 +14,13 @@ struct vial_struct
 
 typedef struct vial_struct vial_t;
 
+enum color getTopColor(vial_t* v)
+{
+
+}
+
+
+
 typedef struct
 {
 	vial_t* state;
@@ -178,7 +185,6 @@ int vailOpenSpaces(int vial, gameState_t* gs)
 int pour(int from, int to, gameState_t* gs)
 {
 
-	printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!POURING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	//TODO: add input validity check
 
 	vial_t* from_v = &gs->state[from];
@@ -213,7 +219,20 @@ int pour(int from, int to, gameState_t* gs)
 		}
 	}
 
-	//TODO: check and update done
+	//update done status
+	toTopColor = to_v->content[to_v->top+1];
+	fromTopColor = from_v->content[from_v->top+1];
+
+	bool to_done = true;
+	bool from_done = true;
+	for(int i = 0; i < VIAL_SIZE; i++)
+	{
+		to_done = to_done && (toTopColor == to_v->content[i]);
+		from_done = from_done && (fromTopColor == from_v->content[i]);
+
+	}
+	to_v->done = to_done;
+	from_v->done = from_done;
 
 	return 0;
 
