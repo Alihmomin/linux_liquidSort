@@ -120,8 +120,8 @@ typedef struct
 
  
 
- //int level[] = {4, yellow,yellow,red,red, yellow,yellow,red,red, empty,empty,empty,empty, empty,empty,empty,empty};
- int level[] = {4, empty,empty,red,red, yellow,yellow,red,red, empty,empty,yellow,yellow, empty,empty,empty,empty};
+ int level[] = {4, yellow,yellow,red,red, yellow,yellow,red,red, empty,empty,empty,empty, empty,empty,empty,empty};
+ //int level[] = {4, empty,empty,red,red, yellow,yellow,red,red, empty,empty,yellow,yellow, empty,empty,empty,empty};
 
 int load_level(gameState_t* gs, int* level, int level_len)
 {
@@ -210,13 +210,7 @@ void print_game_state(gameState_t* gs)
 void print_game_state_metadata(gameState_t* gs)
 {
 	int num_vials = gs->num_vials;
-	// for(int i = 0; i < num_vials; i++)
-	// {
-	// 	printf("vial: %d\n", i);
-	// 	printf("Done: %c\n", gs->state[i].done ? 'Y' : 'N');
-	// 	printf("Top: %i\n", gs->state[i].top);
-	// 	printf("\n");
-	// }
+
 	printf("Vial: ");
 	for(int i = 0; i < num_vials; i++)
 	{
@@ -275,17 +269,6 @@ int pour(int from, int to, gameState_t* gs)
 		}
 	}
 
-	// while(to_v->top != -1)
-	// {
-	// 	to_v->content[to_v->top] = from_v->content[from_v->top+1];
-	// 	from_v->content[from_v->top+1] = empty;
-	// 	from_v->top++;
-	// 	to_v->top--;
-	// 	if(from_v->content[from_v->top+1] != fromTopColor)
-	// 	{
-	// 		break;
-	// 	}
-	// }
 
 	//update done status
 	checkAndSetDone(from_v);
@@ -295,7 +278,26 @@ int pour(int from, int to, gameState_t* gs)
 
 }
 
-int main(void)
+bool isGameWon(gameState_t* gs)
+{
+	bool result = true;
+
+	for(int i = 0; i < gs->num_vials; i++)
+	{
+		result = result && (gs->state[i].done);
+		if(!result)
+		{
+			return result;
+		}
+	}
+
+	return result;
+}
+
+
+
+
+int debug_main(void)
 {
 	printf("hello world\n");
 	gameState_t gs;
@@ -325,6 +327,38 @@ int main(void)
 	print_game_state_metadata(&gs);
 }
 
+
+int gameplay_main(void)
+{
+	printf("welcome to liquid sort\n");
+	gameState_t gs;
+	if(init_game(&gs))
+	{
+		printf("error init game exiting\n");
+		return -100;
+	}
+
+	print_game_state(&gs);
+	print_game_state_metadata(&gs);
+
+	//TODO: add user input
+
+	// while(!isGameWon(&gs))
+	// {
+	// 	print_game_state(&gs);
+	// }
+	
+
+}
+
+
+//TODO: need to add destructors and free memory used to prevent memory leaks
+
+int main(void)
+{
+	//return debug_main();
+	return gameplay_main();
+}
 
 
 // gs.num_vials = 2;
