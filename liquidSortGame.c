@@ -2,6 +2,8 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <stdint.h>
 
 #define VIAL_SIZE 4
 
@@ -295,6 +297,106 @@ bool isGameWon(gameState_t* gs)
 }
 
 
+//TODO: consider adding this as part of the game state
+char command_buffer[256];
+int command_buffer_len = 256;
+
+bool isValidPourCommand(char* s, size_t len)
+{
+
+	if( !((s[0] == 'p') || (s[0] == 'P')) )
+	{
+		return false;
+	}
+
+
+	if(s[1] != ' ')
+	{
+		return false;
+	}
+
+
+	int i = 0;
+	bool digitFound = false;
+	for(i = 2; i < len; i++)
+	{
+		if(s[i] == ' ')
+		{
+			if(!digitFound)
+			{
+				return false;
+			}
+			else
+			{
+				break; //found space after number
+			}
+		}
+		else if(s[i] >= '0' && s[i] <= '9')
+		{
+			digitFound = true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	i++;
+
+	if(i >= len)
+	{
+		return false;
+	}
+
+	digitFound = false;
+	
+	for(i; i < len; i++)
+	{
+		if(s[i] == '\n')
+		{
+			if(!digitFound)
+			{
+				
+				return false;
+			}
+			else
+			{
+				break; //found newline after number
+			}
+		}
+		else if(s[i] >= '0' && s[i] <= '9')
+		{
+			digitFound = true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+	return true;
+
+}
+
+int getCommand(void)
+{
+	if(!fgets(command_buffer, sizeof(command_buffer), stdin))
+	{
+		return -1;
+	}
+	printf("%s\n", command_buffer);
+
+
+}
+
+void printCommands(void)
+{
+	printf("pour: p [from #] [to #] \n");
+	printf("quit: q \n");
+	printf("reset: r\n");
+	//TODO: consider adding an undo command
+}
 
 
 int debug_main(void)
@@ -339,7 +441,7 @@ int gameplay_main(void)
 	}
 
 	print_game_state(&gs);
-	print_game_state_metadata(&gs);
+	printCommands();
 
 	//TODO: add user input
 
@@ -351,13 +453,24 @@ int gameplay_main(void)
 
 }
 
+int userInputTest_main(void)
+{
+	printf("user input test\n");
+	printCommands();
+	getCommand();
+	bool value = isValidPourCommand(command_buffer, command_buffer_len);
+	printf("valid pour: %d\n", value);
+}
 
 //TODO: need to add destructors and free memory used to prevent memory leaks
 
 int main(void)
 {
+	//TODO: figure out a good place to put the memset
+	memset(command_buffer, 0, command_buffer_len);
 	//return debug_main();
-	return gameplay_main();
+	//return gameplay_main();
+	return userInputTest_main();
 }
 
 
