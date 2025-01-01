@@ -166,6 +166,31 @@ int load_level(gameState_t* gs, int* level, int level_len)
 
 }
 
+void resetLevel(gameState_t* gs)
+{
+	int level_index = 1;
+	for(int i = 0; i < gs->num_vials; i++)
+	{
+		gs->state[i].done = true;
+		gs->state[i].top = -1;
+		int vial_color = level[level_index];
+		
+		for(int j = 0; j < VIAL_SIZE; j++)
+		{
+			gs->state[i].content[j] = level[level_index++];
+			if(gs->state[i].content[j] == empty)
+			{
+				gs->state[i].top +=1;
+			}
+			if(gs->state[i].content[j] != vial_color)
+			{
+				gs->state[i].done = false;
+			}
+		}
+	}
+
+}
+
 int init_game(gameState_t* gs)
 {
 	printf("init game\n");
@@ -254,8 +279,8 @@ int pour(int from, int to, gameState_t* gs)
 
 	enum color toTopColor = getTopColor(to_v); //to_v->content[to_v->top+1];
 	enum color fromTopColor = getTopColor(from_v); //from_v->content[from_v->top+1];
-
-	if((toTopColor != fromTopColor) && (getVialEmptyLen(to_v) != 0))
+	
+	if((toTopColor != fromTopColor) && (getVialEmptyLen(to_v) == 0))
 	{
 		return -2;
 	}
@@ -379,14 +404,119 @@ bool isValidPourCommand(char* s, size_t len)
 
 }
 
+int getVialSelection(int* from, int* to)
+{
+	int start_num1 = 2;
+	int start_num2 = 0;
+	
+	//find start of number 2
+	for(int i = 2; i < command_buffer_len; i++)
+	{
+		if(command_buffer[i] == ' ')
+		{
+			start_num2 = i+1;
+			break;
+		}
+	}
+
+	int i = 2;
+	//insert null termination for number 1
+	for(i; i < command_buffer_len; i++)
+	{
+		if(command_buffer[i] == ' ')
+		{
+			command_buffer[i] = '\0';
+			break;
+		}
+	}
+
+	i++;
+	//insert null termination for number 2
+	for(i; i < command_buffer_len; i++)
+	{
+		if(command_buffer[i] == '\n')
+		{
+			command_buffer[i] = '\0';
+			break;
+		}	
+
+	}
+	char* endptr;
+	*from = (int)strtol(&command_buffer[start_num1], &endptr, 10);
+	if(endptr == &command_buffer[start_num1])
+	{
+		return -1;
+	}
+	if(*endptr != '\0')
+	{
+		return -2;
+	}
+
+	*to = (int)strtol(&command_buffer[start_num2], &endptr, 10);
+	if(endptr == &command_buffer[start_num2])
+	{
+		return -3;
+	}
+	if(*endptr != '\0')
+	{
+		return -4;
+	}
+
+	return 0;
+
+}
+
+void processCommand(gameState_t* gs)
+{
+	if(command_buffer[0] == 'p')
+	{
+		int from = -1;
+		int to = -1;
+		getVialSelection(&from, &to);
+		int result = pour(from, to, gs);
+		printf("pour result %i\n", result);
+		printf("from %d, to %d\n", from, to);
+	}
+	else if(command_buffer[0] == 'r')
+	{
+		resetLevel(gs);
+	}
+	else if(command_buffer[0] == 'q')
+	{
+		//TODO: free memory to prevernt leaks
+		exit(0);
+	}
+}
+
 int getCommand(void)
 {
 	if(!fgets(command_buffer, sizeof(command_buffer), stdin))
 	{
 		return -1;
 	}
-	printf("%s\n", command_buffer);
 
+	char command = command_buffer[0];
+
+	switch(command)
+	{
+		case 'p':
+			if(isValidPourCommand(command_buffer, command_buffer_len))
+			{
+				return 0;
+			}
+			return -2;
+			break;
+		case 'q':
+			return 0;
+		case 'r':
+			return 0;
+			
+		default:
+			return -3;
+			break;
+	}
+
+	return 0;
 
 }
 
@@ -430,6 +560,18 @@ int debug_main(void)
 }
 
 
+bool checkGameWon(gameState_t* gs)
+{
+	bool allDone = true;
+	for(int i = 0; i < gs->num_vials; i++)
+	{
+		allDone = allDone && gs->state[i].done;
+	}
+
+	return allDone;
+}
+
+
 int gameplay_main(void)
 {
 	printf("welcome to liquid sort\n");
@@ -440,16 +582,26 @@ int gameplay_main(void)
 		return -100;
 	}
 
-	print_game_state(&gs);
-	printCommands();
+	bool gameWon = false;
 
-	//TODO: add user input
+	do
+	{
+		print_game_state(&gs);
+		printCommands();
 
-	// while(!isGameWon(&gs))
-	// {
-	// 	print_game_state(&gs);
-	// }
+		if(getCommand() == 0)
+		{
+			processCommand(&gs);
+			gameWon = checkGameWon(&gs);
+		}
+		else
+		{
+			printf("error invalid command\n");
+		}	
+	}while(!gameWon);
 	
+	print_game_state(&gs);
+	printf("congradulations you won!!");
 
 }
 
@@ -469,8 +621,8 @@ int main(void)
 	//TODO: figure out a good place to put the memset
 	memset(command_buffer, 0, command_buffer_len);
 	//return debug_main();
-	//return gameplay_main();
-	return userInputTest_main();
+	return gameplay_main();
+	//return userInputTest_main();
 }
 
 
