@@ -62,6 +62,11 @@ int getVialEmptyLen(vial_t* v)
 	return emptySpace;
 }
 
+bool isVialFull(vial_t* v)
+{
+	return getVialEmptyLen(v) == 0;
+}
+
 enum color getTopColor(vial_t* v)
 {  
 	int index = getTopColorIndex(v);
@@ -273,6 +278,7 @@ int pour(int from, int to, gameState_t* gs)
 	//Check to see if to vial is full
 	if(getVialEmptyLen(to_v) == 0)
 	{
+		printf("Error: cannot pour into full vail\n");
 		return -1;
 	}
 
@@ -280,8 +286,9 @@ int pour(int from, int to, gameState_t* gs)
 	enum color toTopColor = getTopColor(to_v); //to_v->content[to_v->top+1];
 	enum color fromTopColor = getTopColor(from_v); //from_v->content[from_v->top+1];
 	
-	if((toTopColor != fromTopColor) && (getVialEmptyLen(to_v) == 0))
+	if((toTopColor != fromTopColor) && (toTopColor != empty))
 	{
+		printf("Error: cannot pour onto diffrent color\n");
 		return -2;
 	}
 
@@ -601,7 +608,7 @@ int gameplay_main(void)
 	}while(!gameWon);
 	
 	print_game_state(&gs);
-	printf("congradulations you won!!");
+	printf("congradulations you won!!\n");
 
 }
 
