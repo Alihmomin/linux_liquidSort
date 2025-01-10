@@ -130,6 +130,57 @@ typedef struct
  int level[] = {4, yellow,yellow,red,red, yellow,yellow,red,red, empty,empty,empty,empty, empty,empty,empty,empty};
  //int level[] = {4, empty,empty,red,red, yellow,yellow,red,red, empty,empty,yellow,yellow, empty,empty,empty,empty};
 
+int allocate_gameState(gameState_t** gs, int num_vials)
+{
+	if(gs == NULL)
+	{
+		return -1;
+
+	}
+	*gs = calloc(1, sizeof(gameState_t));
+	if(*gs == NULL)
+	{
+		return -2;	
+	}
+	(*gs)->state = calloc(num_vials, sizeof(vial_t));
+	if((*gs)->state == NULL)
+	{
+		return -3;
+	}
+
+	return 0;
+}
+
+void deallocate_gameState(gameState_t** gs)
+{
+	free((*gs)->state);
+	free(*gs);
+}
+
+int setLevel(gameState_t* gs, int* levelInfo)
+{
+	int level_index = 1;
+	for(int i = 0; i < gs->num_vials; i++)
+	{
+		gs->state[i].done = true;
+		gs->state[i].top = -1;
+		int vial_color = levelInfo[level_index];
+		
+		for(int j = 0; j < VIAL_SIZE; j++)
+		{
+			gs->state[i].content[j] = levelInfo[level_index++];
+			if(gs->state[i].content[j] == empty)
+			{
+				gs->state[i].top +=1;
+			}
+			if(gs->state[i].content[j] != vial_color)
+			{
+				gs->state[i].done = false;
+			}
+		}
+	}
+}
+
 int load_level(gameState_t* gs, int* level, int level_len)
 {
 	printf("loading level\n");
