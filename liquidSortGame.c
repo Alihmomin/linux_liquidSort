@@ -5,22 +5,10 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "colors.h"
+
 #define VIAL_SIZE 4
 
-enum color
- {
- 	empty = (int)' ',
- 	red = (int)'r',
- 	blue = (int)'b',
- 	yellow = (int)'y',
- 	white = (int)'w',
- 	gray = (int)'g',
- 	brown = (int)'n',
- 	black = (int)'l',
- 	orange = (int)'o',
- 	green = (int)'e',
- 	purple = (int)'p'
- };
 
 
 struct vial_struct
@@ -128,6 +116,8 @@ typedef struct
  
 
  int level[] = {4, yellow,yellow,red,red, yellow,yellow,red,red, empty,empty,empty,empty, empty,empty,empty,empty};
+
+ 
  //int level[] = {4, empty,empty,red,red, yellow,yellow,red,red, empty,empty,yellow,yellow, empty,empty,empty,empty};
 
 int allocate_gameState(gameState_t** gs, int num_vials)
